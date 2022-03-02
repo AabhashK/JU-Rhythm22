@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Aria is a business focused HTML landing page template built with Bootstrap to help you create lead generation websites for companies and their services.">
+    <meta name="author" content="JIC E-Cell">
+
+   
+
+    <!-- Website Title -->
+    <title>JU-RHYTHM | Beats Of Imagination</title>
+    
+    <!-- Styles -->
+    <link href="//db.onlinewebfonts.com/c/7c274d633694f9a2be5321cfa4b31f8e?family=Blade+Runner+Movie+Font" rel="stylesheet" type="text/css"/> 
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/swiper.css" rel="stylesheet">
+	<link href="css/magnific-popup.css" rel="stylesheet">
+	<link href="css/styles.css" rel="stylesheet">
+    <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+  />
+  <link href="http://fonts.cdnfonts.com/css/nasalization-2" rel="stylesheet">
+                
+	<!-- Favicon  -->
+    <link rel="icon" href="images/favicon.png">
+</head>
+
+
+
+<body data-spy="scroll" data-target=".fixed-top">
+    
+  
+<canvas id="canvas" class="canvas"></canvas>
+<script>'use strict';
+
+    let mouse, originx, originy, int, cvs;
+    
+    // Safari doesn't support EventTarget
+    var EventTarget = EventTarget || false;
+    
+    // addEventListener shorthand
+    if (EventTarget) {
+      EventTarget.prototype.evt = function (event, callback) {
+        return this.addEventListener(event, callback);
+      }
+    } else {
+      window.evt = function (event, callback) {
+        return this.addEventListener(event, callback);
+      };
+      document.evt = function (event, callback) {
+        return this.addEventListener(event, callback);
+      };
+      Element.prototype.evt = function (event, callback) {
+        return this.addEventListener(event, callback);
+      };
+    }
+    
+    // getElementById shorthand
+    function $(elemId) {
+        return document.getElementById(elemId);
+    }
+    
+    function init() {
+        cvs = $("canvas");
+    
+        resizeCanvas(cvs);
+    
+        window.evt('resize', resizeCanvas, false);
+        window.evt("mousemove", function (e) {
+            mouse = getMousePos(cvs, e);
+            originx = mouse.x;
+            originy = mouse.y;
+          
+        });
+        // window.evt("touchmove", function (e) {
+        //     originx = e.originalEvent.touches[0].pageX;
+        //     originy = e.originalEvent.touches[0].pageY;
+        // });
+    
+        var network = new Field(0, 0, 50);
+        var emit = new Emitter(0, 0, 50);
+        
+        animateCanvas(cvs, function () {
+            network.animate();
+            emit.animate();
+        });
+    }
+    
+    // Individual particle
+    class Point {
+        constructor(x, y, canvas, dia) {
+            this.canvas = canvas || cvs;
+            this.x = x || 0;
+            this.y = y || 0;
+            this.vx = 0;
+            this.vy = 0;
+            this.speed = Math.random() * .5 + .2;
+            this.angle = Math.random() * 360;
+            this.diaSet = dia || 2 + Math.random() * 10;
+            this.dia = this.diaSet;
+            this.age = 0;
+            let hue = Math.floor(Math.random()*360);
+            this.fill = 'hsl('+hue+', 95%, 70%)';
+            this.line = Math.random() > .5 ? true : false;
+        }
+    
+        emit(life) {
+            let s = this.speed * 2;
+            this.angle += Math.random() * 10 - 5;
+            this.x += s * Math.cos(this.angle * Math.PI / 180);
+            this.y += s * Math.sin(this.angle * Math.PI / 180);
+            this.age += 1 / life;
+            this.boundary();
+        }
+    
+        boundary() {
+            if (this.x < 0) {
+                this.x = this.canvas.width;
+            }
+            if (this.x > this.canvas.width) {
+                this.x = 0;
+            }
+            if (this.y < 0) {
+                this.y = this.canvas.height;
+            }
+            if (this.y > this.canvas.height) {
+                this.y = 0;
+            }
+        }
+    
+        field(life) {
+            let s = this.speed;
+            this.angle += Math.random() * 10 - 5;
+            this.x += s * Math.cos(this.angle * Math.PI / 180);
+            this.y += s * Math.sin(this.angle * Math.PI / 180);
+            this.age += 1 / life;
+            this.boundary();
+        }
+    
+        shrink(life) {
+            this.dia = (1 - this.age) * this.diaSet;
+        }
+    
+        draw() {
+            let ctx = this.canvas.getContext('2d'),
+                x = this.x,
+                y = this.y,
+                dia = this.dia,
+                age = this.age;
+    
+            ctx.beginPath();
+            ctx.fillStyle = this.fill;
+            ctx.strokeStyle = this.fill;
+            ctx.lineWidth = 2;
+            ctx.arc(x, y, dia, 0, 2 * Math.PI);
+            ctx.closePath();
+            
+            this.line !== true ? ctx.fill() : ctx.stroke();
+        }
+    }
+    
+    class ParticleGroup {
+    
+        setPosition(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+    
+        getPosition(x, y) {
+            return {
+                x: this.x,
+                y: this.y
+            };
+        }
+    
+        spawn(x, y, amount, dia) {
+    
+            var arr = [];
+            dia = dia || false;
+    
+            amount = amount || 1;
+    
+            if (amount > 1) {
+                for (let i = 0; i < amount; i++) {
+                    if (dia) {
+                        arr.push(new Point(x, y, cvs, dia));
+                    }
+                    else {
+                        arr.push(new Point(x, y, cvs));
+                    }
+                    
+                }
+            } else {
+                arr = new Point(x, y, cvs, dia);
+            }
+    
+            return arr;
+        }
+    }
+    
+    // Particle Emitter
+    class Emitter extends ParticleGroup {
+        constructor(x, y, life, mouse, dia) {
+            super();
+    
+            if (mouse === undefined) {
+                this.mouse = true;
+            } else {
+                this.mouse = mouse;
+            }
+    
+            this.particles = [];
+            this.x = x || 0;
+            this.y = y || 0;
+            this.life = life || 20;
+            this.canvas = cvs;
+            this.dia = dia || false;
+        }
+    
+        animate() {
+            let particles = this.particles;
+            if (this.mouse) {
+                this.setPosition(originx, originy);
+            }
+    
+            let mul = 1;
+    
+            for (let i = 0; i < mul; i++) {
+                particles.push(this.spawn(this.x, this.y, 1));
+            }
+            
+            if (particles.length > this.life * mul) {
+                for (let i = 0; i < mul; i++) {
+                    particles.shift();
+                }
+            }
+    
+            this.render(this.canvas);
+        }
+        
+        render() {
+            let life = this.life;
+            let ctx = this.canvas.getContext('2d');
+            let particles = this.particles;
+    
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                p.draw();
+                p.emit(this.life);
+                p.shrink();
+            }
+        }
+    }
+    
+    // Particle Field
+    class Field extends ParticleGroup {
+        constructor(x, y, life) {
+            super();
+            this.particles = [];
+            this.canvas = cvs;
+            this.x = x || 0;
+            this.y = y || 0;
+            this.life = life;
+    
+            for (let i = 0; i < this.life; i++) {
+                let x = Math.random() * cvs.width,
+                    y = Math.random() * cvs.height;
+    
+                this.particles.push(this.spawn(x, y, 1));
+            }
+        }
+    
+        animate() {
+            this.render(canvas);
+        }
+    
+        render(canvas) {
+            let ctx = this.canvas.getContext('2d');
+            let particles = this.particles;
+    
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                p.draw();
+                p.field(this.life);
+            }
+        }
+    }
+    
+    // get the mouse position relative to the canvas
+    function getMousePos(cvs, evt) {
+        const rect = cvs.getBoundingClientRect();
+        return {
+            x: evt.clientX - rect.left,
+            y: evt.clientY - rect.top
+        };
+    }
+    
+    // animate the canvas
+    function animateCanvas(canvas, callback) {
+    
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        callback();
+    
+        requestAnimationFrame(animateCanvas.bind(null, canvas, callback));
+    }
+    
+    // Update canvas size to fill window
+    function resizeCanvas(canvas) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        originx = canvas.width / 1;
+        originy = canvas.height / 1;
+    }
+    
+    init();</script>
+
+    <!-- Preloader -->
+	<div class="spinner-wrapper">
+        <div class="spinner">
+            <div class="bounce1"></div>
+            <div class="bounce2"></div>
+            <div class="bounce3"></div>
+        </div>
+    </div>
+    <!-- end of preloader -->
+    
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
+      
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/logo.png" alt="alternative"></a>
+        
+       
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-awesome fas fa-bars"></span>
+            <span class="navbar-toggler-awesome fas fa-times"></span>
+        </button>
+
+
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav ml-auto" style="font-family: 'Nasalization', sans-serif;letter-spacing: 2px; font-size: 20px;">
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="#header">HOME <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="#intro">ABOUT US</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="#services">EVENTS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="Gallery/index.html">GALLERY</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="#projects">TEAM</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="#contact">CONTACT</a>
+                </li>
+            </ul>
+            </span>
+        </div>
+    </nav> <!-- end of navbar -->
+    <!-- end of navbar -->
+
+
+
+
+
+<header id="header" class="header">
+ <div class="header-content">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="text-container">
+                            <h1 >JU RHYTHM'22</h1>
+                            <p  style="font-family: 'Nasalization', sans-serif;letter-spacing: 5px; font-size: 20px"  class="p-heading p-large">Beats Of Imagination</p><br>
+                            <h1><span id="js-rotating"  style="font-family: 'Nasalization', sans-serif;letter-spacing: 5px; font-size: 50px">TECHNO, CULTURAL, BUSINESS, FEST</span></h1>
+                            
+                            <a class="btn-solid-lg page-scroll" href="#intro">Register Now</a>
+                        </div>
+                    </div> <!-- end of col -->
+                </div> <!-- end of row -->
+            </div> <!-- end of container -->
+        </div> <!-- end of header-content -->
+    <section>
+        <div class="wave" id="wave1" style="--i-1;">
+         <div class="wave" id="wave2" style="--i-2;">
+          <div class="wave" id="wave3" style="--i-3;">
+           <div class="wave" id="wave4" style="--i-4;">
+    </section>
+<script>
+    Let wave1 = document.getElementById('wave1');
+     Let wave2 = document.getElementById('wave2');
+      Let wave3 = document.getElementById('wave3');
+       Let wave4 = document.getElementById('wave4');
+
+       window.addEventListener('scroll' , function(){
+           Let value = window.scrollY;
+
+           wave1.style.backgroundPositionX = 400 + value * 4 + 'px';
+            wave2.style.backgroundPositionX = 300 + value * -4 + 'px';
+             wave3.style.backgroundPositionX = 200 + value * 2 + 'px';
+              wave4.style.backgroundPositionX = 100 + value * -2 + 'px';
+       })
+</script>
+
+
+</header>
+
+
+
+
+
+
+
+
+
+
+
+    <!-- Intro -->
+    <div id="intro" class="basic-1">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 ">
+                    <div class="text-container animate__animated animate__fadeInLeft animate__delay-1s">
+                        <div class="section-title "  style="font-family: 'Nasalization', sans-serif;letter-spacing: 2px;">About JU-Rhythm</div>
+                        <h2>We Offer Some Of The Best Business Growth Services In Town</h2>
+                        <p>Launching a new company or developing the market position of an existing one can be quite an overwhelming processs at times.</p>
+                        <p class="testimonial-text">"Our mission here at Aira is to get you through those tough moments relying on our team's expertise in starting and growing companies."</p>
+                        <div class="testimonial-author">Louise Donovan - CEO</div>
+                    </div> <!-- end of text-container -->
+                </div> <!-- end of col -->
+                <div class="col-lg-4">
+                    <div class="image-container animate__animated animate__delay-1s animate__fadeInRight">
+                        <img class="img-fluid" src="images/intro-office.jpg" alt="alternative">
+                    </div> <!-- end of image-container -->
+                </div> <!-- end of col -->
+            </div> <!-- end of row -->
+        </div> <!-- end of container -->
+    </div> <!-- end of basic-1 -->
+    <!-- end of intro -->
+
+
+    <!-- Projects -->
+	<div id="projects" class="filter">
+		<div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h2 style="font-family: 'Nasalization', sans-serif;letter-spacing: 2px;">Events</h2>
+                </div> <!-- end of col -->
+            </div> <!-- end of row -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <!-- Filter -->
+                    <div class="button-group filters-button-group">
+                        <a class="button is-checked" data-filter=".technical"><span>Technical</span></a>
+                        <a class="button" data-filter=".cultural"><span>Cultural</span></a>
+                        <a class="button" data-filter=".business"><span>Business</span></a>
+                        <a class="button" data-filter=".workshop"><span>Workshop</span></a>
+                    </div> <!-- end of button group -->
+                    <div class="grid">
+                        <div class="element-item technical" >
+                            <a class="popup-with-move-anim" href="#project-1"><div class="element-item-overlay"><span>Online Banking</span></div><img src="images/project-1.jpg" alt="alternative"></a>
+                        </div>
+                        <div class="element-item technical">
+                            <a class="popup-with-move-anim" href="#project-2"><div class="element-item-overlay"><span>Classic Industry</span></div><img src="images/project-2.jpg" alt="alternative"></a>
+                        </div>
+                        <div class="element-item business technical cultural">
+                            <a class="popup-with-move-anim" href="#project-3"><div class="element-item-overlay"><span>BoomBap Audio</span></div><img src="images/project-3.jpg" alt="alternative"></a>
+                        </div>
+                        <div class="element-item business technical cultural">
+                            <a class="popup-with-move-anim" href="#project-4"><div class="element-item-overlay"><span>Van Moose</span></div><img src="images/project-4.jpg" alt="alternative"></a>
+                        </div>
+                        <div class="element-item business technical cultural sports">
+                            <a class="popup-with-move-anim" href="#project-5"><div class="element-item-overlay"><span>Joy Moments</span></div><img src="images/project-5.jpg" alt="alternative"></a>
+                        </div>
+                        <div class="element-item business cultural sports">
+                            <a class="popup-with-move-anim" href="#project-6"><div class="element-item-overlay"><span>Spark Events</span></div><img src="images/project-6.jpg" alt="alternative"></a>
+                        </div>
+                        <div class="element-item business cultural">
+                            <a class="popup-with-move-anim" href="#project-7"><div class="element-item-overlay"><span>Casual Wear</span></div><img src="images/project-7.jpg" alt="alternative"></a>
+                        </div>
+                        <div class="element-item business cultural">
+                            <a class="popup-with-move-anim" href="#project-8"><div class="element-item-overlay"><span>Zazoo Apps</span></div><img src="images/project-8.jpg" alt="alternative"></a>
+                        </div>
+                    </div> <!-- end of grid -->
+                    <!-- end of filter -->
+                    
+                </div> <!-- end of col -->
+            </div> <!-- end of row -->
+		</div> <!-- end of container -->
+    </div> <!-- end of filter -->
+    <!-- end of projects -->
+
+
+    <!-- Project Lightboxes -->
+    <!-- Lightbox -->
+    <div id="project-1" class="lightbox-basic zoom-anim-dialog mfp-hide">
+        <div class="row">
+            <button title="Close (Esc)" type="button" class="mfp-close x-button">×</button>
+            <div class="col-lg-8">
+                <img class="img-fluid" src="images/project-1.jpg" alt="alternative">
+            </div> <!-- end of col -->
+            <div class="col-lg-4">
+                <h3>Online Banking</h3>
+                <hr class="line-heading">
+                <h6>Strategy Development</h6>
+                <p>Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current needs</p>
+                <p>By offering the best professional services and quality products in the market. Don't hesitate and get in touch with us.</p>
+                <div class="testimonial-container">
+                    <p class="testimonial-text">Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current requirements.</p>
+                    <p class="testimonial-author">General Manager</p>
+                </div>
+                <a class="btn-solid-reg" href="#your-link">DETAILS</a> <a class="btn-outline-reg mfp-close as-button" href="#projects">BACK</a> 
+            </div> <!-- end of col -->
+        </div> <!-- end of row -->
+    </div> <!-- end of lightbox-basic -->
+    <!-- end of lightbox -->
+
+    <!-- Lightbox -->
+    <div id="project-2" class="lightbox-basic zoom-anim-dialog mfp-hide">
+        <div class="row">
+            <button title="Close (Esc)" type="button" class="mfp-close x-button">×</button>
+            <div class="col-lg-8">
+                <img class="img-fluid" src="images/project-2.jpg" alt="alternative">
+            </div> <!-- end of col -->
+            <div class="col-lg-4">
+                <h3>Classic Industry</h3>
+                <hr class="line-heading">
+                <h6>Strategy Development</h6>
+                <p>Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current needs</p>
+                <p>By offering the best professional services and quality products in the market. Don't hesitate and get in touch with us.</p>
+                <div class="testimonial-container">
+                    <p class="testimonial-text">Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current requirements.</p>
+                    <p class="testimonial-author">General Manager</p>
+                </div>
+                <a class="btn-solid-reg" href="#your-link">DETAILS</a> <a class="btn-outline-reg mfp-close as-button" href="#projects">BACK</a> 
+            </div> <!-- end of col -->
+        </div> <!-- end of row -->
+    </div> <!-- end of lightbox-basic -->
+    <!-- end of lightbox -->
+
+    <!-- Lightbox -->
+    <div id="project-3" class="lightbox-basic zoom-anim-dialog mfp-hide">
+        <div class="row">
+            <button title="Close (Esc)" type="button" class="mfp-close x-button">×</button>
+            <div class="col-lg-8">
+                <img class="img-fluid" src="images/project-3.jpg" alt="alternative">
+            </div> <!-- end of col -->
+            <div class="col-lg-4">
+                <h3>BoomBap Audio</h3>
+                <hr class="line-heading">
+                <h6>Strategy Development</h6>
+                <p>Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current needs</p>
+                <p>By offering the best professional services and quality products in the market. Don't hesitate and get in touch with us.</p>
+                <div class="testimonial-container">
+                    <p class="testimonial-text">Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current requirements.</p>
+                    <p class="testimonial-author">General Manager</p>
+                </div>
+                <a class="btn-solid-reg" href="#your-link">DETAILS</a> <a class="btn-outline-reg mfp-close as-button" href="#projects">BACK</a> 
+            </div> <!-- end of col -->
+        </div> <!-- end of row -->
+    </div> <!-- end of lightbox-basic -->
+    <!-- end of lightbox -->
+
+    <!-- Lightbox -->
+    <div id="project-4" class="lightbox-basic zoom-anim-dialog mfp-hide">
+        <div class="row">
+            <button title="Close (Esc)" type="button" class="mfp-close x-button">×</button>
+            <div class="col-lg-8">
+                <img class="img-fluid" src="images/project-4.jpg" alt="alternative">
+            </div> <!-- end of col -->
+            <div class="col-lg-4">
+                <h3>Van Moose</h3>
+                <hr class="line-heading">
+                <h6>Strategy Development</h6>
+                <p>Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current needs</p>
+                <p>By offering the best professional services and quality products in the market. Don't hesitate and get in touch with us.</p>
+                <div class="testimonial-container">
+                    <p class="testimonial-text">Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current requirements.</p>
+                    <p class="testimonial-author">General Manager</p>
+                </div>
+                <a class="btn-solid-reg" href="#your-link">DETAILS</a> <a class="btn-outline-reg mfp-close as-button" href="#projects">BACK</a> 
+            </div> <!-- end of col -->
+        </div> <!-- end of row -->
+    </div> <!-- end of lightbox-basic -->
+    <!-- end of lightbox -->
+
+    <!-- Lightbox -->
+    <div id="project-5" class="lightbox-basic zoom-anim-dialog mfp-hide">
+        <div class="row">
+            <button title="Close (Esc)" type="button" class="mfp-close x-button">×</button>
+            <div class="col-lg-8">
+                <img class="img-fluid" src="images/project-5.jpg" alt="alternative">
+            </div> <!-- end of col -->
+            <div class="col-lg-4">
+                <h3>Joy Moments</h3>
+                <hr class="line-heading">
+                <h6>Strategy Development</h6>
+                <p>Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current needs</p>
+                <p>By offering the best professional services and quality products in the market. Don't hesitate and get in touch with us.</p>
+                <div class="testimonial-container">
+                    <p class="testimonial-text">Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current requirements.</p>
+                    <p class="testimonial-author">General Manager</p>
+                </div>
+                <a class="btn-solid-reg" href="#your-link">DETAILS</a> <a class="btn-outline-reg mfp-close as-button" href="#projects">BACK</a> 
+            </div> <!-- end of col -->
+        </div> <!-- end of row -->
+    </div> <!-- end of lightbox-basic -->
+    <!-- end of lightbox -->
+
+    <!-- Lightbox -->
+    <div id="project-6" class="lightbox-basic zoom-anim-dialog mfp-hide">
+        <div class="row">
+            <button title="Close (Esc)" type="button" class="mfp-close x-button">×</button>
+            <div class="col-lg-8">
+                <img class="img-fluid" src="images/project-6.jpg" alt="alternative">
+            </div> <!-- end of col -->
+            <div class="col-lg-4">
+                <h3>Spark Events</h3>
+                <hr class="line-heading">
+                <h6>Strategy Development</h6>
+                <p>Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current needs</p>
+                <p>By offering the best professional services and quality products in the market. Don't hesitate and get in touch with us.</p>
+                <div class="testimonial-container">
+                    <p class="testimonial-text">Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current requirements.</p>
+                    <p class="testimonial-author">General Manager</p>
+                </div>
+                <a class="btn-solid-reg" href="#your-link">DETAILS</a> <a class="btn-outline-reg mfp-close as-button" href="#projects">BACK</a> 
+            </div> <!-- end of col -->
+        </div> <!-- end of row -->
+    </div> <!-- end of lightbox-basic -->
+    <!-- end of lightbox -->
+
+    <!-- Lightbox -->
+    <div id="project-7" class="lightbox-basic zoom-anim-dialog mfp-hide">
+        <div class="row">
+            <button title="Close (Esc)" type="button" class="mfp-close x-button">×</button>
+            <div class="col-lg-8">
+                <img class="img-fluid" src="images/project-7.jpg" alt="alternative">
+            </div> <!-- end of col -->
+            <div class="col-lg-4">
+                <h3>Casual Wear</h3>
+                <hr class="line-heading">
+                <h6>Strategy Development</h6>
+                <p>Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current needs</p>
+                <p>By offering the best professional services and quality products in the market. Don't hesitate and get in touch with us.</p>
+                <div class="testimonial-container">
+                    <p class="testimonial-text">Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current requirements.</p>
+                    <p class="testimonial-author">General Manager</p>
+                </div>
+                <a class="btn-solid-reg" href="#your-link">DETAILS</a> <a class="btn-outline-reg mfp-close as-button" href="#projects">BACK</a> 
+            </div> <!-- end of col -->
+        </div> <!-- end of row -->
+    </div> <!-- end of lightbox-basic -->
+    <!-- end of lightbox -->
+
+    <!-- Lightbox -->
+    <div id="project-8" class="lightbox-basic zoom-anim-dialog mfp-hide">
+        <div class="row">
+            <button title="Close (Esc)" type="button" class="mfp-close x-button">×</button>
+            <div class="col-lg-8">
+                <img class="img-fluid" src="images/project-8.jpg" alt="alternative">
+            </div> <!-- end of col -->
+            <div class="col-lg-4">
+                <h3>Zazoo Apps</h3>
+                <hr class="line-heading">
+                <h6>Strategy Development</h6>
+                <p>Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current needs</p>
+                <p>By offering the best professional services and quality products in the market. Don't hesitate and get in touch with us.</p>
+                <div class="testimonial-container">
+                    <p class="testimonial-text">Need a solid foundation for your business growth plans? Aria will help you manage sales and meet your current requirements.</p>
+                    <p class="testimonial-author">General Manager</p>
+                </div>
+                <a class="btn-solid-reg" href="#your-link">DETAILS</a> <a class="btn-outline-reg mfp-close as-button" href="#projects">BACK</a> 
+            </div> <!-- end of col -->
+        </div> <!-- end of row -->
+    </div> <!-- end of lightbox-basic -->
+    <!-- end of lightbox -->
+    <!-- end of project lightboxes -->
+
+
+
+    <!-- Contact -->
+    <div id="contact" class="form-2">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="text-container">
+                        <div class="section-title text-white" style="font-family: 'Nasalization', sans-serif;letter-spacing: 2px;">CONTACT</div>
+                        <h2 class="text-white" style="font-family: 'Nasalization', sans-serif;letter-spacing: 2px;">Get In Touch Using The Form</h2>
+                        <p class="text-white">You can stop by our office for a cup of coffee and just use the contact form below for any questions and inquiries</p>
+                        <ul class="list-unstyled li-space-lg">
+                            <li class="address text-white"><i class="fas fa-map-marker-alt"></i>22nd Innovative Street, San Francisco, CA 94043, US</li>
+                            <li><i class="fas fa-phone "></i><a class="text-white" href="tel:003024630820">+81 720 22 126</a></li>
+                            <li><i class="fas fa-phone"></i><a class="text-white" href="tel:003024630820">+81 720 22 128</a></li>
+                            <li><i class="fas fa-envelope"></i><a class="text-white" href="mailto:office@aria.com">office@aria.com</a></li>
+                        </ul>
+                        <h3 class="text-white" style="font-family: 'Nasalization', sans-serif;letter-spacing: 2px;">Follow Us On Social Media</h3>
+
+                        <span class="fa-stack">
+                            <a href="#your-link">
+                                <span class="hexagon"></span>
+                                <i class="fab fa-facebook-f fa-stack-1x"></i>
+                            </a>
+                        </span>
+                        <span class="fa-stack">
+                            <a href="#your-link">
+                                <span class="hexagon"></span>
+                                <i class="fab fa-twitter fa-stack-1x"></i>
+                            </a>
+                        </span>
+                        <span class="fa-stack">
+                            <a href="#your-link">
+                                <span class="hexagon"></span>
+                                <i class="fab fa-instagram fa-stack-1x"></i>
+                            </a>
+                        </span>
+                        <span class="fa-stack">
+                            <a href="#your-link">
+                                <span class="hexagon"></span>
+                                <i class="fab fa-linkedin-in fa-stack-1x"></i>
+                            </a>
+                        </span>
+                    </div> <!-- end of text-container -->
+                </div> <!-- end of col -->
+                <div class="col-lg-6">
+                    <div class="image-container">
+                        <img class="img-fluid" src="images/bg20.jpg" alt="alternative" style="border-radius: 10%; border: 2px solid #030d1a;">
+                    </div> <!-- end of image-container -->
+                </div> <!-- end of col -->
+                <div class="col-lg-12">
+                    <h2 style="font-size:15px" class="text-center text-white">© Copyright JU-RHYTHM 2022. All Rights Reserved </h2>
+                    <h2 style="font-size:15px" class="text-center text-white">Designed by <a style="color:#2e86c1;" href="">Aabhash Kesharwani</a></h2>
+                </div>
+            </div> <!-- end of row -->
+        </div> <!-- end of container -->
+    </div> <!-- end of form-2 -->
+    <!-- end of contact -->
+
+
+
+
+    	
+    <!-- Scripts -->
+    <script src="js/jquery.min.js"></script> <!-- jQuery for Bootstrap's JavaScript plugins -->
+    <script src="js/popper.min.js"></script> <!-- Popper tooltip library for Bootstrap -->
+    <script src="js/bootstrap.min.js"></script> <!-- Bootstrap framework -->
+    <script src="js/jquery.easing.min.js"></script> <!-- jQuery Easing for smooth scrolling between anchors -->
+    <script src="js/swiper.min.js"></script> <!-- Swiper for image and text sliders -->
+    <script src="js/jquery.magnific-popup.js"></script> <!-- Magnific Popup for lightboxes -->
+    <script src="js/morphext.min.js"></script> <!-- Morphtext rotating text in the header -->
+    <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
+    <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
+    <script src="js/scripts.js"></script> <!-- Custom scripts -->
+
+
+
+    
+
+</body>
+</html>
