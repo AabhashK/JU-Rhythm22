@@ -1428,16 +1428,18 @@ input[type='checkbox'] {
 .filter .grid {
 	margin-top: 1.25rem;
 	border-radius: 0.375rem;
+	
 }
 
 /* Hover Animation */
 .filter .element-item {
-	position: relative;
+	position: absolute;
+	display: flex;
+	flex-wrap: wrap-reverse;
 	padding: 20px;
 	float: left;
 	overflow: hidden;
 	width: 50%;
-	
 	background-color: transparent; /* to hide 1px white margin in IE */
 }
 
@@ -1457,7 +1459,7 @@ input[type='checkbox'] {
 
 .filter .element-item .element-item-overlay { 
 	position: absolute;
-	z-index: 2;
+	z-index: 1;
 	top: 0;
 	left: 0;
 	width: 100%;
