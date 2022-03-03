@@ -329,8 +329,7 @@ strong {
 /* IE10+ hack to solve lower label text position compared to the rest of the browsers */
 @media screen and (-ms-high-contrast: active), screen and (-ms-high-contrast: none) {  
 	.form-control-input {
-		padding-top: 1.25rem;
-		padding-bottom: 0.75rem;
+		
 		line-height: 1.75rem;
 	}
 
@@ -861,22 +860,31 @@ input[type='checkbox'] {
 .basic-1 {
 	padding-top: 6.5rem;
 	padding-bottom: 3rem;
+	background: #030d1a;
+	
 }
 
 .basic-1 .text-container {
 	margin-bottom: 3rem;
+	color: #ffff;
 }
 
 .basic-1 .section-title {
 	margin-bottom: 0.5rem;
+	color: #fff;
 }
 
 .basic-1 h2 {
 	margin-bottom: 1.375rem;
+	color: #fff;
+}
+.basic-1 p
+{
+	color: #fff;
 }
 
 .basic-1 .testimonial-author {
-	color: #484a46;
+	color: #fff;
 }
 
 /* Hover Animation */
@@ -1367,7 +1375,7 @@ input[type='checkbox'] {
 .filter {
 	padding-top: 6.5rem;
 	padding-bottom: 7rem;	
-	background: url(../images/bg12.jpg);
+	background: url(../images/bg12.png);
 	background-size: cover;
 	background-attachment: fixed;
 }
