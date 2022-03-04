@@ -686,11 +686,20 @@ input[type="checkbox"] {
 
 .navbar-custom .navbar-brand {
   font-size: 0;
+  padding: 10px;
+}
+@media screen and (max-width:1000px) {
+  .navbar-custom .navbar-brand {
+    font-size: 0;
+    padding: 0px;
+  }
+  
 }
 
 .navbar-custom .navbar-brand.logo-image img {
-  width: 90px;
+  width: 80px;
 }
+
 
 .navbar-custom .navbar-brand.logo-text {
   margin-top: 0.25rem;
@@ -838,15 +847,15 @@ input[type="checkbox"] {
   margin-bottom: 3rem;
 }
 
-.header h1 {
+.header .text-header {
   margin-bottom: 0.5rem;
   color: #fff;
   font-family: "Nasalization", sans-serif;
   letter-spacing: 10px;
-  font-size: 80px;
+  font-size: 110px;
 }
-@media screen and (min-width: 100px) {
-  .header h1 {
+@media screen and (max-width: 1000px) {
+  .header .text-header {
     font-family: "Nasalization", sans-serif;
     letter-spacing: 10px;
     font-size: 50px;
@@ -869,6 +878,7 @@ input[type="checkbox"] {
 .basic-1 {
   padding-top: 6.5rem;
   padding-bottom: 3rem;
+  background:#030d1a;
 }
 
 .basic-1 .text-container {
@@ -1368,7 +1378,7 @@ input[type="checkbox"] {
 .filter {
   padding-top: 6.5rem;
   padding-bottom: 7rem;
-  background: url(../images/bg12.jpg);
+  background: url(../images/bg12.png);
   background-size: cover;
   background-attachment: fixed;
 }
