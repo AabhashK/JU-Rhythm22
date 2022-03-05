@@ -5,6 +5,8 @@
   box-sizing: border-box;
 }
 
+
+@import url("http://fonts.cdnfonts.com/css/nasalization-2");
 .gallery-section{
   width: 100%;
   padding: 60px 0;
@@ -31,6 +33,10 @@
   height: 4px;
   background: #333;
   margin: 60px auto;
+}
+.gallery-font
+{
+  
 }
 
 .gallery-section .gallery{
